@@ -35,6 +35,7 @@ if __name__ == "__main__":
     current_time = 0
     standev = statistics.stdev(mid_pices)
     y = 0.1
+    pnl = 0
 
     # So let's say the strat is: we sell 100 units of AUDUSD over the ask price
     # We buy 100 units of AUDUSD when less than the bid price.
@@ -45,9 +46,9 @@ if __name__ == "__main__":
         indiff_price = indifference_price(mid_pices[i], inventory, t, standev)
         spread = bid_ask_spread(y, standev, t, 1) # I'll let k = 1 as a parameter, not sure what it should be
         if indiff_price + spread >= aud_usd_prices[i]["ask"]:
-            inventory -= 100 * (indiff_price + spread)
+            inventory -= 100 * (indiff_price + spread/2)
         elif indiff_price - spread <= aud_usd_prices[i]["bid"]:
-            inventory += 100 * (indiff_price - spread)
+            inventory += 100 * (indiff_price - spread/2)
 
     print(f"\nFINAL INVENTORY IS: {inventory/(10**6)} million")
 
