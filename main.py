@@ -37,8 +37,8 @@ if __name__ == "__main__":
     standev = statistics.stdev(mid_pices)
     y = 0.1
 
-    # So let's say the strat is: we sell 10 units of AUDUSD over the ask price
-    # We buy 10 units of AUDUSD when less than the bid price.
+    # So let's say the strat is: we sell 100 units of AUDUSD over the ask price
+    # We buy 100 units of AUDUSD when less than the bid price.
     # Inventories will be in total amount of asset (not whole units, it will be e.g. 10 * 0.91 = 9.1)
 
     for i in range(1, len(aud_usd_prices)):
