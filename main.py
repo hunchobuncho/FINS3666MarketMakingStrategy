@@ -9,7 +9,6 @@ def get_prices(path):
         line_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         for row in line_reader:
-            print(f"Bid price is: {row[2]} Ask price is: {row[3]} ")
             line_count += 1
             if line_count == 10000:
                 break
@@ -24,7 +23,7 @@ def indifference_price(s, q, t, standev):
 
 def bid_ask_spread(y, standev, t, k):
     T = 1
-    return float(y * standev ** 2 * (T - t) + (2 / y) * math.log(1 + y / k))
+    return y * standev ** 2 * (T - t) + (2 / y) * math.log(1 + y / k)
 
 
 if __name__ == "__main__":
@@ -44,11 +43,11 @@ if __name__ == "__main__":
     for i in range(1, len(aud_usd_prices)):
         t = float(len(aud_usd_prices) - i) / len(aud_usd_prices)
         indiff_price = indifference_price(mid_pices[i], inventory, t, standev)
-        spread = bid_ask_spread(y, standev, t, 1)
+        spread = bid_ask_spread(y, standev, t, 1) # I'll let k = 1 as a parameter, not sure what it should be
         if indiff_price + spread >= aud_usd_prices[i]["ask"]:
             inventory -= 100 * (indiff_price + spread)
         elif indiff_price - spread <= aud_usd_prices[i]["bid"]:
             inventory += 100 * (indiff_price - spread)
 
-    print(f"FINAL INVENTORY IS: {inventory/(10**6)} mil")
+    print(f"\nFINAL INVENTORY IS: {inventory/(10**6)} million")
 
