@@ -66,14 +66,14 @@ if __name__ == "__main__":
 
         all_mid_prices[str(filepath)] = [(x["bid"] + x["ask"]) / 2 for x in all_prices[str(filepath)]]
 
-    # T = 1: the Terminal time, q starts at 0 , t is time, y = 0.1,
-    prices = get_prices("data/EURUSD.csv")
-    # Start with buying 10 units of the original price
-    mid_prices = [(x["bid"] + x["ask"]) / 2 for x in prices]
-    inventory = 100 * (mid_prices[0])
+    # # T = 1: the Terminal time, q starts at 0 , t is time, y = 0.1,
+    # prices = get_prices("data/EURUSD.csv")
+    # # Start with buying 10 units of the original price
+    # mid_prices = [(x["bid"] + x["ask"]) / 2 for x in prices]
+
     current_time = 0
     pnl = 0
-    y = 500000
+    y = 50000
 
     # So let's say the strat is: we sell 100 units of AUDUSD over the ask price
     # We buy 100 units of AUDUSD when less than the bid price.
@@ -83,6 +83,7 @@ if __name__ == "__main__":
     final_buys = {}
     final_sells = {}
     for i in all_prices:
+        inventory = 100 * (all_mid_prices[i][0])
         final_pnls[i] = calculate_pnl(all_prices[i], all_mid_prices[i], inventory)['pnl']
         final_buys[i] = calculate_pnl(all_prices[i], all_mid_prices[i], inventory)['num_buys']
         final_sells[i] = calculate_pnl(all_prices[i], all_mid_prices[i], inventory)['num_sells']
