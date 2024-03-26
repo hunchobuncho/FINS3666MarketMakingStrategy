@@ -29,6 +29,9 @@ def bid_ask_spread(y, standev, t, k):
 
 def calculate_pnl(prices, mid_prices, inventory):
     pnl = 0
+    num_buys = 0
+    num_sells = 0
+
     for i in range(1, len(prices)):
         t = float(len(prices) - i) / len(prices)
         stdev = 0 if (i <= 4) else statistics.stdev(mid_prices[:i - 3])  # standard deviation up to a point
@@ -43,11 +46,13 @@ def calculate_pnl(prices, mid_prices, inventory):
         if ask_price >= indiff_price + (spread / 2):  # We want the indiff price to be from 3 rows ago
             inventory -= 100 * (indiff_price + spread / 2)
             pnl += 100 * (indiff_price + spread / 2)
+            num_sells += 1
 
         elif bid_price <= indiff_price - (spread / 2):  # indiff price has to be from 3 rows ago
             inventory += 100 * (indiff_price - spread / 2)
             pnl -= 100 * (indiff_price - spread / 2)
-    return pnl
+            num_buys += 1
+    return {'pnl': pnl, 'num_buys': num_buys, 'num_sells': num_sells}
 
 
 if __name__ == "__main__":
@@ -68,16 +73,19 @@ if __name__ == "__main__":
     inventory = 100 * (mid_prices[0])
     current_time = 0
     pnl = 0
-
-    y = 0.5*(10**6)
+    y = 500000
 
     # So let's say the strat is: we sell 100 units of AUDUSD over the ask price
     # We buy 100 units of AUDUSD when less than the bid price.
     # Inventories will be in total amount of asset (not whole units, it will be e.g. 10 * 0.91 = 9.1)
 
     final_pnls = {}
+    final_buys = {}
+    final_sells = {}
     for i in all_prices:
-        final_pnls[i] = calculate_pnl(all_prices[i], all_mid_prices[i], inventory)
+        final_pnls[i] = calculate_pnl(all_prices[i], all_mid_prices[i], inventory)['pnl']
+        final_buys[i] = calculate_pnl(all_prices[i], all_mid_prices[i], inventory)['num_buys']
+        final_sells[i] = calculate_pnl(all_prices[i], all_mid_prices[i], inventory)['num_sells']
 
     # final_pnl = calculate_pnl(prices, mid_prices, inventory)
     # print(f" THE ACTUAL ONE FOR EUR/AUD.csv IS: {final_pnl}")
@@ -85,4 +93,4 @@ if __name__ == "__main__":
 
     print(f"If gamma was {y}: ")
     for i in final_pnls:
-        print(f"The final Profit and Loss for: {i} is: {final_pnls[i]}")
+        print(f"Profit and Loss for: {i} is: {final_pnls[i]} || Number of Buys: {final_buys[i]} || Number of Sells: {final_sells[i]}")
