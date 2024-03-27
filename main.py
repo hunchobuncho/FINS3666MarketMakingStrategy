@@ -108,9 +108,7 @@ if __name__ == "__main__":
     # y = 50000
 
     for y in [100, 200000]:
-        # y = 200000 # TODO: SWITCH TO THIS AND UNINDENT (SHIFT-TAB) IF YOU ONLY WANT TO TEST ONE GAMMA
-                    # TODO: ALSO, IF YOU ONLY WANT TO TEST ONE CSV FILE, DRAG IT OUT OF THE DATA FOLDER AND
-                    # INTO THE MAIN FOLDER
+        # y = 200000
 
         # So let's say the strat is: we sell 100 units of AUDUSD over the ask price
         # We buy 100 units of AUDUSD when less than the bid price.
@@ -150,3 +148,22 @@ if __name__ == "__main__":
         for i in final_sym_strat_pnls:
             print(f"Profit and Loss for: {i} is: {final_sym_strat_pnls[i]} || Inventory : {final_sym_strat_inventory[i]} "
                   f"|| Number of Buys: {final_sym_strat_buys[i]} || Number of Sells: {final_sym_strat_sells[i]}")
+
+        # Suppose this is the list of dictionaries we want to write to a CSV file
+
+        # Specify the CSV file name
+        csv_file_name = 'inventory_method.csv'
+
+        # Open the file in write mode
+        with open(csv_file_name, mode='w', newline='') as file:
+            # Create a writer object from csv module
+            csv_writer = csv.DictWriter(file, fieldnames=final_inv_strat_pnls.keys())
+
+            # Write the header (column names)
+            csv_writer.writeheader()
+
+            # Write the data rows
+            csv_writer.writerow(final_inv_strat_pnls)
+
+
+
