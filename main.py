@@ -11,7 +11,7 @@ def get_prices(path):
         line_count = 0
         for row in line_reader:
             line_count += 1
-            if line_count == 10000:
+            if line_count == 20000:
                 break
             mid_prices.append({"bid": float(row[2]), "ask": float(row[3])})
     return mid_prices
@@ -19,7 +19,7 @@ def get_prices(path):
 
 def indifference_price(s, q, t, standev):
     T = 1
-    return s - q * standev ** 2 * (T - t)
+    return s - y * q * standev ** 2 * (T - t)
 
 
 def bid_ask_spread(y, standev, t, k):
@@ -40,7 +40,7 @@ def pnl_symmetric_strat(prices, mid_prices, inventory, y):
         if stdev_cache[i] == 0 and i > 4:
             stdev_cache[i] = statistics.stdev(mid_prices[:i - 3])
         stdev = stdev_cache[i]
-        spread = bid_ask_spread(y, stdev, t, k=1.5)  # k is set as 1.5 as a parameter
+        spread = bid_ask_spread(y, stdev, t, k=3000)  # k is set as 1.5 as a parameter
         bid_price = prices[i]["bid"]
         ask_price = prices[i]["ask"]
 
@@ -83,7 +83,7 @@ def pnl_inventory_strat(prices, mid_prices, inventory, y):
         indiff_price = indifference_price(mid_prices[0], inventory, t,
                                           stdev) if (i <= 4) else indifference_price(mid_prices[i - 4], inventory, t,
                                                                                      stdev)  # get indiff prices from 3 rows ago
-        spread = bid_ask_spread(y, stdev, t, k=1.5)  # k is set as 1.5 as a parameter
+        spread = bid_ask_spread(y, stdev, t, k=3000)  # k is set as 1.5 as a parameter
         bid_price = prices[i]["bid"]
         ask_price = prices[i]["ask"]
 
@@ -98,6 +98,7 @@ def pnl_inventory_strat(prices, mid_prices, inventory, y):
             pnl -= 100 * (indiff_price - spread / 2)
             num_buys += 1
         pnl_list.append(pnl)
+        # print(f"Bid ask spread{spread}, indiff price {indiff_price}")
     return {'pnl': pnl, 'num_buys': num_buys, 'num_sells': num_sells, 'inventory': inventory, 'pnl_list': pnl_list}
 
 
@@ -115,12 +116,12 @@ if __name__ == "__main__":
     current_time = 0
     pnl = 0
 
-    for y in [10, 100, 1000, 10000, 100000, 1000000, 10**7, 10**8]:
+    for y in [1]:
 
         # So let's say the strat is: we sell 100 units of AUDUSD over the ask price
         # We buy 100 units of AUDUSD when less than the bid price.
         # Inventories will be in total amount of asset (not whole units, it will be e.g. 10 * 0.91 = 9.1)
-
+        print(f"=============GAMMA IS {y}=============")
         final_inv_strat_pnls = {}
         final_inv_strat_buys = {}
         final_inv_strat_sells = {}
