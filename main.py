@@ -57,6 +57,12 @@ def pnl_symmetric_strat(prices, mid_prices, inventory, y):
             num_buys += 1
     return {'pnl': pnl, 'num_buys': num_buys, 'num_sells': num_sells, 'inventory': inventory}
 
+def write_to_csv(file_name, fieldnames, data):
+    with open(file_name, mode='w', newline='') as file:
+        csv_writer = csv.DictWriter(file, fieldnames=fieldnames)
+        csv_writer.writeheader()
+        for row in data:
+            csv_writer.writerow(row)
 
 def pnl_inventory_strat(prices, mid_prices, inventory, y):
     pnl = 0
@@ -107,7 +113,7 @@ if __name__ == "__main__":
 
     # y = 50000
 
-    for y in [100, 200000]:
+    for y in [100]:
         # y = 200000
 
         # So let's say the strat is: we sell 100 units of AUDUSD over the ask price
@@ -149,21 +155,33 @@ if __name__ == "__main__":
             print(f"Profit and Loss for: {i} is: {final_sym_strat_pnls[i]} || Inventory : {final_sym_strat_inventory[i]} "
                   f"|| Number of Buys: {final_sym_strat_buys[i]} || Number of Sells: {final_sym_strat_sells[i]}")
 
-        # Suppose this is the list of dictionaries we want to write to a CSV file
 
-        # Specify the CSV file name
-        csv_file_name = 'inventory_method.csv'
+        inventory_data = []
+        for key in final_inv_strat_pnls:
+            inventory_data.append({
+                'Currency': key,
+                'PnL': final_inv_strat_pnls[key],
+                'Inventory': final_inv_strat_inventory[key],
+                'Num_Buys': final_inv_strat_buys[key],
+                'Num_Sells': final_inv_strat_sells[key]
+            })
 
-        # Open the file in write mode
-        with open(csv_file_name, mode='w', newline='') as file:
-            # Create a writer object from csv module
-            csv_writer = csv.DictWriter(file, fieldnames=final_inv_strat_pnls.keys())
+        symmetric_data = []
+        for key in final_sym_strat_pnls:
+            symmetric_data.append({
+                'Currency': key,
+                'PnL': final_sym_strat_pnls[key],
+                'Inventory': final_sym_strat_inventory[key],
+                'Num_Buys': final_sym_strat_buys[key],
+                'Num_Sells': final_sym_strat_sells[key]
+            })
 
-            # Write the header (column names)
-            csv_writer.writeheader()
+        # Writing to CSV files
+        inventory_fields = ['Currency', 'PnL', 'Inventory', 'Num_Buys', 'Num_Sells']
+        write_to_csv('inventory_method.csv', inventory_fields, inventory_data)
 
-            # Write the data rows
-            csv_writer.writerow(final_inv_strat_pnls)
+        symmetric_fields = ['Currency', 'PnL', 'Inventory', 'Num_Buys', 'Num_Sells']
+        write_to_csv('symmetric_method.csv', symmetric_fields, symmetric_data)
 
 
 
