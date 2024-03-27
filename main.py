@@ -11,7 +11,7 @@ def get_prices(path):
         line_count = 0
         for row in line_reader:
             line_count += 1
-            if line_count == 1000:
+            if line_count == 30000:
                 break
             mid_prices.append({"bid": float(row[2]), "ask": float(row[3])})
     return mid_prices
@@ -41,7 +41,7 @@ def pnl_symmetric_strat(prices, mid_prices, inventory, y):
         if stdev_cache[i] == 0 and i > 4:
             stdev_cache[i] = statistics.stdev(mid_prices[:i - 3])
         stdev = stdev_cache[i]
-        spread = bid_ask_spread(y, stdev, t, k=10)  # k is set as 1.5 as a parameter
+        spread = bid_ask_spread(y, stdev, t, k=3000)  # k is set as 1.5 as a parameter
         bid_price = prices[i]["bid"]
         ask_price = prices[i]["ask"]
 
@@ -84,7 +84,7 @@ def pnl_inventory_strat(prices, mid_prices, inventory, y):
         indiff_price = indifference_price(mid_prices[0], inventory, t,
                                           stdev) if (i <= 4) else indifference_price(mid_prices[i - 4], inventory, t,
                                                                                      stdev)  # get indiff prices from 3 rows ago
-        spread = bid_ask_spread(y, stdev, t, k=10)  # k is set as 1.5 as a parameter
+        spread = bid_ask_spread(y, stdev, t, k=3000)  # k is set as 1.5 as a parameter
         bid_price = prices[i]["bid"]
         ask_price = prices[i]["ask"]
 
@@ -189,9 +189,6 @@ if __name__ == "__main__":
 
         symmetric_fields = ['Currency', 'PnL', 'Inventory', 'Number of Buys', 'Number of Sells']
         write_to_csv('symmetric_method.csv', symmetric_fields, symmetric_data)
-
-        # TODO: plot inventory
-        # TODO: clean up code
 
         csv_file_name = 'inventory_pnl_plot.csv'
         with open(csv_file_name, mode='w', newline='') as file:
