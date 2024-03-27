@@ -31,9 +31,10 @@ def pnl_symmetric_strat(prices, mid_prices, inventory, y):
     num_buys = 0
     num_sells = 0
     stdev_cache = [0] * len(prices)
+    pnl_list = []
 
     for i in range(1, len(prices)):
-        t = float(len(prices) - i) / len(prices)
+        t = i / len(prices)
 
         # Calculate standard deviation once and cache it
         if stdev_cache[i] == 0 and i > 4:
@@ -55,23 +56,25 @@ def pnl_symmetric_strat(prices, mid_prices, inventory, y):
             inventory += 100 * (mid_price - spread / 2)
             pnl -= 100 * (mid_price - spread / 2)
             num_buys += 1
-    return {'pnl': pnl, 'num_buys': num_buys, 'num_sells': num_sells, 'inventory': inventory}
+        pnl_list.append(pnl)
+    return {'pnl': pnl, 'num_buys': num_buys, 'num_sells': num_sells, 'inventory': inventory, 'pnl_list': pnl_list}
 
 def write_to_csv(file_name, fieldnames, data):
     with open(file_name, mode='w', newline='') as file:
         csv_writer = csv.DictWriter(file, fieldnames=fieldnames)
         csv_writer.writeheader()
         for row in data:
-            csv_writer.writerow(row)
+                csv_writer.writerow(row)
 
 def pnl_inventory_strat(prices, mid_prices, inventory, y):
     pnl = 0
     num_buys = 0
     num_sells = 0
     stdev_cache = [0] * len(prices)
+    pnl_list = []
 
     for i in range(1, len(prices)):
-        t = float(len(prices) - i) / len(prices)
+        t = i / len(prices)
 
         # Calculate standard deviation once and cache it
         if stdev_cache[i] == 0 and i > 4:
@@ -94,7 +97,8 @@ def pnl_inventory_strat(prices, mid_prices, inventory, y):
             inventory += 100 * (indiff_price - spread / 2)
             pnl -= 100 * (indiff_price - spread / 2)
             num_buys += 1
-    return {'pnl': pnl, 'num_buys': num_buys, 'num_sells': num_sells, 'inventory': inventory}
+        pnl_list.append(pnl)
+    return {'pnl': pnl, 'num_buys': num_buys, 'num_sells': num_sells, 'inventory': inventory, 'pnl_list': pnl_list}
 
 
 if __name__ == "__main__":
@@ -111,10 +115,7 @@ if __name__ == "__main__":
     current_time = 0
     pnl = 0
 
-    # y = 50000
-
-    for y in [100]:
-        # y = 200000
+    for y in [10, 100, 1000, 10000, 100000, 1000000, 10**7, 10**8]:
 
         # So let's say the strat is: we sell 100 units of AUDUSD over the ask price
         # We buy 100 units of AUDUSD when less than the bid price.
@@ -124,11 +125,13 @@ if __name__ == "__main__":
         final_inv_strat_buys = {}
         final_inv_strat_sells = {}
         final_inv_strat_inventory = {}
+        final_inv_strat_pnl_plot = {}
 
         final_sym_strat_pnls = {}
         final_sym_strat_buys = {}
         final_sym_strat_sells = {}
         final_sym_strat_inventory = {}
+        final_sym_strat_pnl_plot = {}
         for i in all_prices:
             starting_inv = 100 * (all_mid_prices[i][0])
             inventory_results = pnl_inventory_strat(all_prices[i], all_mid_prices[i], starting_inv, y)
@@ -138,11 +141,13 @@ if __name__ == "__main__":
             final_inv_strat_buys[i] = inventory_results['num_buys']
             final_inv_strat_sells[i] = inventory_results['num_sells']
             final_inv_strat_inventory[i] = inventory_results['inventory']
+            final_inv_strat_pnl_plot[i] = inventory_results['pnl_list']
 
             final_sym_strat_pnls[i] = symmetric_results['pnl']
             final_sym_strat_buys[i] = symmetric_results['num_buys']
             final_sym_strat_sells[i] = symmetric_results['num_sells']
             final_sym_strat_inventory[i] = symmetric_results['inventory']
+            final_sym_strat_pnl_plot[i] = symmetric_results['pnl_list']
 
         print("=============Inventory Strategy ==================")
         for i in final_inv_strat_pnls:
@@ -155,15 +160,15 @@ if __name__ == "__main__":
             print(f"Profit and Loss for: {i} is: {final_sym_strat_pnls[i]} || Inventory : {final_sym_strat_inventory[i]} "
                   f"|| Number of Buys: {final_sym_strat_buys[i]} || Number of Sells: {final_sym_strat_sells[i]}")
 
-
         inventory_data = []
         for key in final_inv_strat_pnls:
             inventory_data.append({
                 'Currency': key,
                 'PnL': final_inv_strat_pnls[key],
                 'Inventory': final_inv_strat_inventory[key],
-                'Num_Buys': final_inv_strat_buys[key],
-                'Num_Sells': final_inv_strat_sells[key]
+                'Number of Buys': final_inv_strat_buys[key],
+                'Number of Sells': final_inv_strat_sells[key],
+                'PnL Plot': final_inv_strat_pnl_plot[key],
             })
 
         symmetric_data = []
@@ -172,16 +177,35 @@ if __name__ == "__main__":
                 'Currency': key,
                 'PnL': final_sym_strat_pnls[key],
                 'Inventory': final_sym_strat_inventory[key],
-                'Num_Buys': final_sym_strat_buys[key],
-                'Num_Sells': final_sym_strat_sells[key]
+                'Number of Buys': final_sym_strat_buys[key],
+                'Number of Sells': final_sym_strat_sells[key],
+                'PnL Plot': final_sym_strat_pnl_plot[key],
             })
 
         # Writing to CSV files
-        inventory_fields = ['Currency', 'PnL', 'Inventory', 'Num_Buys', 'Num_Sells']
+        inventory_fields = ['Currency', 'PnL', 'Inventory', 'Number of Buys', 'Number of Sells', 'PnL Plot']
         write_to_csv('inventory_method.csv', inventory_fields, inventory_data)
 
-        symmetric_fields = ['Currency', 'PnL', 'Inventory', 'Num_Buys', 'Num_Sells']
+        symmetric_fields = ['Currency', 'PnL', 'Inventory', 'Number of Buys', 'Number of Sells', 'PnL Plot']
         write_to_csv('symmetric_method.csv', symmetric_fields, symmetric_data)
+
+        # TODO: plot pnl for both
+        # TODO: plot inventory
+
+        csv_file_name = 'inventory_pnl_plot.csv'
+        with open(csv_file_name, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(final_inv_strat_pnl_plot.keys())
+            for row in zip(*final_inv_strat_pnl_plot.values()):
+                writer.writerow(row)
+
+        csv_file_name = 'symmetric_pnl_plot.csv'
+        with open(csv_file_name, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(final_sym_strat_pnl_plot.keys())
+            for row in zip(*final_sym_strat_pnl_plot.values()):
+                writer.writerow(row)
+
 
 
 
