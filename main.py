@@ -3,11 +3,23 @@ import csv
 import statistics
 import os
 
-#CONSTANTS
-NUM_SIMULATIONS = 100
-K_PARAM = 3000
+# CONSTANTS
+NUM_SIMULATIONS = 10000
+K_PARAM = 10
 GAMMA = 1
+TERMINAL_TIME = 1
 
+'''
+Gets all of the bid and ask prices given a path
+
+Parameters
+---------------
+path: string 
+
+Returns 
+--------------
+A list of all of the bid and ask prices (not mid prices)
+'''
 def get_prices(path):
     mid_prices = []
     with open(path) as csv_file:
@@ -20,23 +32,53 @@ def get_prices(path):
             mid_prices.append({"bid": float(row[2]), "ask": float(row[3])})
     return mid_prices
 
+'''
+Calculate Indifference Price
 
-def indifference_price(s, q, t, standev):
-    T = 1
-    return s - GAMMA * q * standev ** 2 * (T - t)
+Parameters
+---------------
+s: the mid price of the asset -> float 
+q: total inventory of asset -> float
+t: current time as a fraction of the terminal time -> float
+standev: standard deviation of asset up to a particular time -> float
+y: Gamma parameter -> float
+
+Returns 
+--------------
+The indifference price, which is the mid-price adjusted for time approaching the terminal time 
+and inventory -> float
+'''
+def indifference_price(s, q, t, standev, y):
+    T = TERMINAL_TIME
+    return s - y * q * standev ** 2 * (T - t)
 
 
+'''
+Calculates the bid ask spread
+
+Parameters
+---------------
+y: Gamma parameter -> float
+t: Current time as a fraction of the terminal time -> float
+standev: Standard deviation of asset up to a particular time -> float
+k: The K parameter -> float
+
+Returns 
+--------------
+The final bid ask spread
+'''
 def bid_ask_spread(y, standev, t, k):
-    T = 1
-    # print(f"Bid-ask Spread is: {str(y * standev ** 2 * (T - t) + (2 / y) * math.log(1 + y / k))}")
+    T = TERMINAL_TIME
     return y * standev ** 2 * (T - t) + (2 / y) * math.log(1 + y / k)
+
 
 def write_to_csv(file_name, fieldnames, data):
     with open(file_name, mode='w', newline='') as file:
         csv_writer = csv.DictWriter(file, fieldnames=fieldnames)
         csv_writer.writeheader()
         for row in data:
-                csv_writer.writerow(row)
+            csv_writer.writerow(row)
+
 def write_list_to_csv(csv_file_name, plot):
     with open(csv_file_name, mode='w', newline='') as file:
         writer = csv.writer(file)
@@ -44,7 +86,8 @@ def write_list_to_csv(csv_file_name, plot):
         for row in zip(*plot.values()):
             writer.writerow(row)
 
-def pnl_inventory_strat(prices, mid_prices, inventory, y, is_symmetric_method = None):
+
+def calculate_pnl(prices, mid_prices, inventory, y, is_symmetric_method=None):
     pnl = 0
     num_buys = 0
     num_sells = 0
@@ -61,32 +104,33 @@ def pnl_inventory_strat(prices, mid_prices, inventory, y, is_symmetric_method = 
         indiff_price = 0
         if (is_symmetric_method is None):
             indiff_price = indifference_price(mid_prices[0], inventory, t,
-            stdev) if (i <= 4) else indifference_price(mid_prices[i - 4], inventory,
-            t, stdev)  # get indiff prices from 3 rows ago
+                                              stdev, GAMMA) if (i <= 4) else indifference_price(mid_prices[i - 4],
+                                                                                                inventory,
+                                                                                                t,
+                                                                                                stdev,
+                                                                                                GAMMA)  # get indiff prices from 3 rows ago
         else:
-            indiff_price = mid_prices[0] if (i <= 4) else mid_prices[i-4]
+            indiff_price = mid_prices[0] if (i <= 4) else mid_prices[i - 4]
 
         spread = bid_ask_spread(y, stdev, t, k=K_PARAM)  # k is set as 1.5 as a parameter
         bid_price = prices[i]["bid"]
         ask_price = prices[i]["ask"]
 
-        # Actual market making strategy
-        if ask_price >= indiff_price + (spread / 2):  # We want the indiff price to be from 3 rows ago
+        # Actual market making strategy: if price moves below or above our bounds, then buy or sell asset
+        if ask_price >= indiff_price + (spread / 2):
             inventory -= 100 * (indiff_price + spread / 2)
             pnl += 100 * (indiff_price + spread / 2)
             num_sells += 1
 
-        elif bid_price <= indiff_price - (spread / 2):  # indiff price has to be from 3 rows ago
+        elif bid_price <= indiff_price - (spread / 2):
             inventory += 100 * (indiff_price - spread / 2)
             pnl -= 100 * (indiff_price - spread / 2)
             num_buys += 1
         pnl_list.append(pnl)
-        # print(f"Bid ask spread{spread}, indiff price {indiff_price}")
     return {'pnl': pnl, 'num_buys': num_buys, 'num_sells': num_sells, 'inventory': inventory, 'pnl_list': pnl_list}
 
 
 if __name__ == "__main__":
-
     # Loops through all the currency pairs and stores them in a dict
     all_prices = {}
     all_mid_prices = {}
@@ -116,8 +160,8 @@ if __name__ == "__main__":
     final_sym_strat_pnl_plot = {}
     for i in all_prices:
         starting_inv = 100 * (all_mid_prices[i][0])
-        inventory_results = pnl_inventory_strat(all_prices[i], all_mid_prices[i], starting_inv, GAMMA)
-        symmetric_results = pnl_inventory_strat(all_prices[i], all_mid_prices[i], starting_inv, GAMMA, True)
+        inventory_results = calculate_pnl(all_prices[i], all_mid_prices[i], starting_inv, GAMMA)
+        symmetric_results = calculate_pnl(all_prices[i], all_mid_prices[i], starting_inv, GAMMA, True)
 
         final_inv_strat_pnls[i] = inventory_results['pnl']
         final_inv_strat_buys[i] = inventory_results['num_buys']
@@ -175,6 +219,3 @@ if __name__ == "__main__":
 
     csv_file_name = 'symmetric_pnl_plot.csv'
     write_list_to_csv(csv_file_name, final_sym_strat_pnl_plot)
-
-
-
